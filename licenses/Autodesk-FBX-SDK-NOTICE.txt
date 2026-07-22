@@ -1,0 +1,11 @@
+Autodesk FBX SDK notice
+
+Universal Scene Converter's FBX support is built with Autodesk FBX SDK 2020.3.9.
+The Autodesk FBX SDK installer is used only during compilation and is not redistributed in the Universal Scene Converter package.
+The resulting Universal Scene Converter binary contains Autodesk FBX code linked into Adobe's USD FBX file-format plugin.
+
+Autodesk and FBX are registered trademarks or trademarks of Autodesk, Inc., in the USA and other countries.
+Autodesk FBX SDK is provided under the license terms included with the SDK distribution.
+
+FBX SDK information and downloads:
+https://aps.autodesk.com/developer/overview/fbx-sdk

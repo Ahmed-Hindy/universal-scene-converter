@@ -1,0 +1,20 @@
+# Local build output
+work/
+build/
+out/
+tests/tmp-scenes/
+
+# CMake and Visual Studio
+.vs/
+CMakeCache.txt
+CMakeFiles/
+CTestTestfile.cmake
+Testing/
+cmake_install.cmake
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+
+# Windows filesystem artifact
+NUL

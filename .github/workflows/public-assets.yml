@@ -1,0 +1,138 @@
+name: Public Asset Regression
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_run_id:
+        description: "Optional successful Build Universal Scene Converter run ID"
+        required: false
+        type: string
+  workflow_run:
+    workflows: ["Build Universal Scene Converter"]
+    types: [completed]
+  schedule:
+    - cron: "0 4 * * 1"
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: public-assets-${{ github.event.workflow_run.id || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    name: Prepare matrix
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      build_run_id: ${{ steps.runtime.outputs.build_run_id }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Resolve runtime build
+        id: runtime
+        shell: bash
+        env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          REQUESTED_RUN_ID: ${{ inputs.build_run_id }}
+          WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+
+          if [[ -n "${WORKFLOW_RUN_ID:-}" ]]; then
+            build_run_id="$WORKFLOW_RUN_ID"
+          elif [[ -n "${REQUESTED_RUN_ID:-}" ]]; then
+            build_run_id="$REQUESTED_RUN_ID"
+          else
+            build_run_id="$(gh run list \
+              --repo "$GH_REPO" \
+              --workflow build-universal-scene-converter.yml \
+              --branch main \
+              --status success \
+              --limit 1 \
+              --json databaseId \
+              --jq '.[0].databaseId')"
+          fi
+
+          if [[ -z "$build_run_id" || "$build_run_id" == "null" ]]; then
+            echo "No successful Build Universal Scene Converter run was found." >&2
+            exit 1
+          fi
+
+          conclusion="$(gh run view "$build_run_id" --repo "$GH_REPO" --json conclusion --jq '.conclusion')"
+          if [[ "$conclusion" != "success" ]]; then
+            echo "Build Universal Scene Converter run $build_run_id did not succeed: $conclusion" >&2
+            exit 1
+          fi
+
+          echo "Using Build Universal Scene Converter run $build_run_id"
+          echo "build_run_id=$build_run_id" >> "$GITHUB_OUTPUT"
+
+      - name: Build asset matrix
+        id: matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          manifest="tests/public-assets.json"
+          jq -e '.schema_version == 1 and (.assets | length > 0)' "$manifest" >/dev/null
+          matrix="$(jq -c '{include: [.assets[] | {id, format, publish_artifacts: (if has("publish_artifacts") then .publish_artifacts else true end)}]}' "$manifest")"
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
+  test:
+    name: ${{ matrix.format }} / ${{ matrix.id }}
+    needs: prepare
+    runs-on: windows-2022
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Download portable runtime
+        uses: actions/download-artifact@v8
+        with:
+          name: universal-scene-converter-windows-x64
+          path: artifact
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ needs.prepare.outputs.build_run_id }}
+
+      - name: Test pinned public asset
+        shell: pwsh
+        run: |
+          ./tests/Test-PublicAsset.ps1 `
+              -RuntimeZip "${{ github.workspace }}/artifact/universal-scene-converter-windows-x64.zip" `
+              -ManifestPath "${{ github.workspace }}/tests/public-assets.json" `
+              -AssetId "${{ matrix.id }}" `
+              -WorkRoot "${{ github.workspace }}/work/public-asset-${{ matrix.id }}"
+
+      - name: Upload converted USD artifacts
+        if: matrix.publish_artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: public-asset-${{ matrix.id }}-usd
+          path: ${{ github.workspace }}/work/public-asset-${{ matrix.id }}/usd-artifacts
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: public-asset-${{ matrix.id }}-diagnostics
+          path: ${{ github.workspace }}/work/public-asset-${{ matrix.id }}/logs
+          if-no-files-found: warn
+          retention-days: 7

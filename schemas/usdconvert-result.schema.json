@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Ahmed-Hindy/universal-scene-converter/main/schemas/usdconvert-result.schema.json",
+  "title": "Universal Scene Converter result",
+  "description": "Machine-readable result emitted by usdconvert --json.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "tool",
+    "version",
+    "openusd_version",
+    "success",
+    "exit_code",
+    "message",
+    "jobs",
+    "summary"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "tool": {
+      "const": "usdconvert"
+    },
+    "version": {
+      "type": "string"
+    },
+    "openusd_version": {
+      "type": "string"
+    },
+    "success": {
+      "type": "boolean"
+    },
+    "exit_code": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "message": {
+      "type": "string"
+    },
+    "jobs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/job"
+      }
+    },
+    "summary": {
+      "$ref": "#/$defs/summary"
+    }
+  },
+  "$defs": {
+    "job": {
+      "type": "object",
+      "required": [
+        "input",
+        "output",
+        "status",
+        "exit_code",
+        "message",
+        "generated_files"
+      ],
+      "properties": {
+        "input": {
+          "type": "string"
+        },
+        "output": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "success",
+            "failed"
+          ]
+        },
+        "exit_code": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "message": {
+          "type": "string"
+        },
+        "generated_files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "summary": {
+      "type": "object",
+      "required": [
+        "succeeded",
+        "failed"
+      ],
+      "properties": {
+        "succeeded": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "failed": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

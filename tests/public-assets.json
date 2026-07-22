@@ -1,0 +1,296 @@
+{
+  "schema_version": 1,
+  "assets": [
+    {
+      "id": "gltf-box-embedded",
+      "format": "glTF",
+      "source_repository": "KhronosGroup/glTF-Sample-Assets",
+      "source_revision": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+      "license": "CC-BY-4.0",
+      "license_url": "https://github.com/KhronosGroup/glTF-Sample-Assets/blob/2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf/Models/Box/LICENSE.md",
+      "input": "Box.gltf",
+      "roundtrip_extension": "gltf",
+      "files": [
+        {
+          "path": "Box.gltf",
+          "url": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf/Models/Box/glTF-Embedded/Box.gltf",
+          "sha256": "f98a369e29ffc754cc897f78d695754ac6812ba7ddcd23705dd8d4e258f5f13b"
+        }
+      ]
+    },
+    {
+      "id": "glb-box",
+      "format": "GLB",
+      "source_repository": "KhronosGroup/glTF-Sample-Assets",
+      "source_revision": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+      "license": "CC-BY-4.0",
+      "license_url": "https://github.com/KhronosGroup/glTF-Sample-Assets/blob/2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf/Models/Box/LICENSE.md",
+      "input": "Box.glb",
+      "roundtrip_extension": "glb",
+      "files": [
+        {
+          "path": "Box.glb",
+          "url": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf/Models/Box/glTF-Binary/Box.glb",
+          "sha256": "ed52f7192b8311d700ac0ce80644e3852cd01537e4d62241b9acba023da3d54e"
+        }
+      ]
+    },
+    {
+      "id": "gltf-avocado-textured",
+      "format": "glTF",
+      "source_repository": "KhronosGroup/glTF-Sample-Assets",
+      "source_revision": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+      "license": "CC0-1.0",
+      "license_url": "https://github.com/KhronosGroup/glTF-Sample-Assets/blob/2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf/Models/Avocado/LICENSE.md",
+      "input": "Avocado.gltf",
+      "roundtrip_extension": "gltf",
+      "files": [
+        {
+          "path": "Avocado.gltf",
+          "url": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf/Models/Avocado/glTF/Avocado.gltf",
+          "sha256": "c9bde1d2f09514dad0a16971df2222beb582fad5dfc86203de1d56389d52feda"
+        },
+        {
+          "path": "Avocado.bin",
+          "url": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf/Models/Avocado/glTF/Avocado.bin",
+          "sha256": "3bf7ce0ec994562eabf0cb72a52bbc7976818d630d62609a966b53a5ff9b9180"
+        },
+        {
+          "path": "Avocado_baseColor.png",
+          "url": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf/Models/Avocado/glTF/Avocado_baseColor.png",
+          "sha256": "385dce948c3b9e8bc93e1c930d796e72b02cbd474b121a160d577de95ebbb48f"
+        },
+        {
+          "path": "Avocado_normal.png",
+          "url": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf/Models/Avocado/glTF/Avocado_normal.png",
+          "sha256": "25783c211761b7e32497fdd3e2490f3bac05b738e5e2bc62fc5b78a270bb4e50"
+        },
+        {
+          "path": "Avocado_roughnessMetallic.png",
+          "url": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf/Models/Avocado/glTF/Avocado_roughnessMetallic.png",
+          "sha256": "33ee80f7ccfd36825acfbd5ef0a51326bea49e33efed852dca44798798bd6901"
+        }
+      ]
+    },
+    {
+      "id": "fbx-sanity-cube",
+      "format": "FBX sanity cube",
+      "source_repository": "adobe/USD-Fileformat-plugins",
+      "source_revision": "6441b97807a59472337f9c3d02df089d45ed1c48",
+      "license": "Apache-2.0",
+      "license_url": "https://github.com/adobe/USD-Fileformat-plugins/blob/6441b97807a59472337f9c3d02df089d45ed1c48/LICENSE-2.0.txt",
+      "input": "SanityCube.fbx",
+      "roundtrip_extension": "fbx",
+      "expected_usda_minimum_counts": [
+        {"text": "def Xform", "count": 4},
+        {"text": "def Mesh", "count": 1}
+      ],
+      "files": [
+        {
+          "path": "SanityCube.fbx",
+          "url": "https://raw.githubusercontent.com/adobe/USD-Fileformat-plugins/6441b97807a59472337f9c3d02df089d45ed1c48/fbx/tests/SanityCube.fbx",
+          "sha256": "274c4616b18c4c8ff5cfd847f5503ff47f2c7c1df6242d183f483800fe838957"
+        }
+      ]
+    },
+    {
+      "id": "fbx-vertex-colors",
+      "format": "FBX vertex colors",
+      "source_repository": "adobe/USD-Fileformat-plugins",
+      "source_revision": "6441b97807a59472337f9c3d02df089d45ed1c48",
+      "license": "Apache-2.0",
+      "license_url": "https://github.com/adobe/USD-Fileformat-plugins/blob/6441b97807a59472337f9c3d02df089d45ed1c48/LICENSE-2.0.txt",
+      "input": "cube-colors.fbx",
+      "roundtrip_extension": "fbx",
+      "expected_usda_minimum_counts": [
+        {"text": "def Xform", "count": 2},
+        {"text": "def Mesh", "count": 1},
+        {"text": "def Material", "count": 1},
+        {"text": "primvars:displayColor", "count": 2}
+      ],
+      "files": [
+        {
+          "path": "cube-colors.fbx",
+          "url": "https://raw.githubusercontent.com/adobe/USD-Fileformat-plugins/6441b97807a59472337f9c3d02df089d45ed1c48/test/assets/fbx/cube-colors.fbx",
+          "sha256": "459f7e89ca2cc50ac94ce7249fa0425cd539450a1d7c613ee5cf7158c8e2b7d1"
+        }
+      ]
+    },
+    {
+      "id": "fbx-megaphone",
+      "format": "FBX material hierarchy",
+      "source_repository": "adobe/USD-Fileformat-plugins",
+      "source_revision": "6441b97807a59472337f9c3d02df089d45ed1c48",
+      "license": "Apache-2.0",
+      "license_url": "https://github.com/adobe/USD-Fileformat-plugins/blob/6441b97807a59472337f9c3d02df089d45ed1c48/LICENSE-2.0.txt",
+      "input": "Megaphone_01_Lowpoly.fbx",
+      "roundtrip_extension": "fbx",
+      "expected_usda_minimum_counts": [
+        {"text": "def Xform", "count": 2},
+        {"text": "def Mesh", "count": 1},
+        {"text": "def Material", "count": 1},
+        {"text": "xformOp:", "count": 3}
+      ],
+      "files": [
+        {
+          "path": "Megaphone_01_Lowpoly.fbx",
+          "url": "https://raw.githubusercontent.com/adobe/USD-Fileformat-plugins/6441b97807a59472337f9c3d02df089d45ed1c48/test/assets/fbx/Megaphone_01_Lowpoly.fbx",
+          "sha256": "aba40c821b42e9c766162f5e6b48f1afbf32bf951c2884ff1e9ac093cf1e192f"
+        }
+      ]
+    },
+    {
+      "id": "fbx-multi-mesh-robot",
+      "format": "FBX multi-mesh hierarchy",
+      "source_repository": "adobe/USD-Fileformat-plugins",
+      "source_revision": "6441b97807a59472337f9c3d02df089d45ed1c48",
+      "license": "Apache-2.0",
+      "license_url": "https://github.com/adobe/USD-Fileformat-plugins/blob/6441b97807a59472337f9c3d02df089d45ed1c48/LICENSE-2.0.txt",
+      "input": "SimpleRobotwithUdims.fbx",
+      "roundtrip_extension": "fbx",
+      "publish_artifacts": false,
+      "expected_usda_minimum_counts": [
+        {"text": "def Xform", "count": 28},
+        {"text": "def Mesh", "count": 27},
+        {"text": "def Material", "count": 1},
+        {"text": "primvars:displayColor", "count": 54}
+      ],
+      "files": [
+        {
+          "path": "SimpleRobotwithUdims.fbx",
+          "url": "https://raw.githubusercontent.com/adobe/USD-Fileformat-plugins/6441b97807a59472337f9c3d02df089d45ed1c48/test/assets/fbx/SimpleRobotwithUdims.fbx",
+          "sha256": "291f11a118f2610784cf99ff84f4b29e07b315da9584f88eb9a2fbde58da364c"
+        }
+      ]
+    },
+    {
+      "id": "obj-cornell-multimaterial",
+      "format": "OBJ",
+      "source_repository": "tinyobjloader/tinyobjloader",
+      "source_revision": "45636bdcef1a4fec140346b90c0b50bf0bc3e23b",
+      "license": "MIT",
+      "license_url": "https://github.com/tinyobjloader/tinyobjloader/blob/45636bdcef1a4fec140346b90c0b50bf0bc3e23b/LICENSE",
+      "input": "cornell_box_multimaterial.obj",
+      "roundtrip_extension": "obj",
+      "files": [
+        {
+          "path": "cornell_box_multimaterial.obj",
+          "url": "https://raw.githubusercontent.com/tinyobjloader/tinyobjloader/45636bdcef1a4fec140346b90c0b50bf0bc3e23b/models/cornell_box_multimaterial.obj",
+          "sha256": "fec6577f4f04c26d4bd2ffc484db4164ffd1aa8c52588175e12862b71a47a2d9"
+        },
+        {
+          "path": "cornell_box.mtl",
+          "url": "https://raw.githubusercontent.com/tinyobjloader/tinyobjloader/45636bdcef1a4fec140346b90c0b50bf0bc3e23b/models/cornell_box.mtl",
+          "sha256": "fd63222ca010b32a66e592ea95637abd39e61c74dd48ea40adf23b51a96e422b"
+        }
+      ]
+    },
+    {
+      "id": "obj-vertex-colors",
+      "format": "OBJ",
+      "source_repository": "tinyobjloader/tinyobjloader",
+      "source_revision": "45636bdcef1a4fec140346b90c0b50bf0bc3e23b",
+      "license": "MIT",
+      "license_url": "https://github.com/tinyobjloader/tinyobjloader/blob/45636bdcef1a4fec140346b90c0b50bf0bc3e23b/LICENSE",
+      "input": "cube-vertexcol.obj",
+      "roundtrip_extension": "obj",
+      "files": [
+        {
+          "path": "cube-vertexcol.obj",
+          "url": "https://raw.githubusercontent.com/tinyobjloader/tinyobjloader/45636bdcef1a4fec140346b90c0b50bf0bc3e23b/models/cube-vertexcol.obj",
+          "sha256": "0919e507118ecf9bd8dba83bb870f15e19704d01d82ab40daf8dfe70555040f3"
+        },
+        {
+          "path": "cube.mtl",
+          "url": "https://raw.githubusercontent.com/tinyobjloader/tinyobjloader/45636bdcef1a4fec140346b90c0b50bf0bc3e23b/models/cube.mtl",
+          "sha256": "fd63222ca010b32a66e592ea95637abd39e61c74dd48ea40adf23b51a96e422b"
+        }
+      ]
+    },
+    {
+      "id": "stl-spider-ascii",
+      "format": "STL ASCII",
+      "source_repository": "assimp/assimp",
+      "source_revision": "a939f2479513a4d92060f2348909886b67d548aa",
+      "license": "BSD-3-Clause",
+      "license_url": "https://github.com/assimp/assimp/blob/a939f2479513a4d92060f2348909886b67d548aa/LICENSE",
+      "input": "Spider_ascii.stl",
+      "roundtrip_extension": "stl",
+      "files": [
+        {
+          "path": "Spider_ascii.stl",
+          "url": "https://raw.githubusercontent.com/assimp/assimp/a939f2479513a4d92060f2348909886b67d548aa/test/models/STL/Spider_ascii.stl",
+          "sha256": "58d0b3af7e8a790467bd0c3a7edc2ffa0265ac52ac04b2c4207d21c6c05c5628"
+        }
+      ]
+    },
+    {
+      "id": "stl-spider-binary",
+      "format": "STL Binary",
+      "source_repository": "assimp/assimp",
+      "source_revision": "a939f2479513a4d92060f2348909886b67d548aa",
+      "license": "BSD-3-Clause",
+      "license_url": "https://github.com/assimp/assimp/blob/a939f2479513a4d92060f2348909886b67d548aa/LICENSE",
+      "input": "Spider_binary.stl",
+      "roundtrip_extension": "stl",
+      "files": [
+        {
+          "path": "Spider_binary.stl",
+          "url": "https://raw.githubusercontent.com/assimp/assimp/a939f2479513a4d92060f2348909886b67d548aa/test/models/STL/Spider_binary.stl",
+          "sha256": "267fdc458d855d70b09f88d3b434ddddeaf3785ea57011ab0b49a5d8581c55bd"
+        }
+      ]
+    },
+    {
+      "id": "usda-basis-curves",
+      "format": "USDA",
+      "source_repository": "PixarAnimationStudios/OpenUSD",
+      "source_revision": "363a7c8da8d1937072a5f0989e91faf72eb1fa76",
+      "license": "Tomorrow Open Source Technology License 1.0",
+      "license_url": "https://github.com/PixarAnimationStudios/OpenUSD/blob/363a7c8da8d1937072a5f0989e91faf72eb1fa76/LICENSE.txt",
+      "input": "basisCurves.usda",
+      "roundtrip_extension": "usdc",
+      "files": [
+        {
+          "path": "basisCurves.usda",
+          "url": "https://raw.githubusercontent.com/PixarAnimationStudios/OpenUSD/363a7c8da8d1937072a5f0989e91faf72eb1fa76/extras/usd/examples/usdGeomExamples/basisCurves.usda",
+          "sha256": "d0b0b0d8afe70fcb7304b8715cf707c41588a20bc719e6a387978186ed4e9155"
+        }
+      ]
+    },
+    {
+      "id": "usdc-clean",
+      "format": "USDC",
+      "source_repository": "PixarAnimationStudios/OpenUSD",
+      "source_revision": "363a7c8da8d1937072a5f0989e91faf72eb1fa76",
+      "license": "Tomorrow Open Source Technology License 1.0",
+      "license_url": "https://github.com/PixarAnimationStudios/OpenUSD/blob/363a7c8da8d1937072a5f0989e91faf72eb1fa76/LICENSE.txt",
+      "input": "clean.usdc",
+      "roundtrip_extension": "usdc",
+      "files": [
+        {
+          "path": "clean.usdc",
+          "url": "https://raw.githubusercontent.com/PixarAnimationStudios/OpenUSD/363a7c8da8d1937072a5f0989e91faf72eb1fa76/pxr/usdValidation/bin/usdchecker/testenv/testUsdChecker/clean/clean.usdc",
+          "sha256": "678b8a54895ce2f4548286dabf1bb0e7b593094208cd77b29ee1b91d03056bfb"
+        }
+      ]
+    },
+    {
+      "id": "usdz-clean",
+      "format": "USDZ",
+      "source_repository": "PixarAnimationStudios/OpenUSD",
+      "source_revision": "363a7c8da8d1937072a5f0989e91faf72eb1fa76",
+      "license": "Tomorrow Open Source Technology License 1.0",
+      "license_url": "https://github.com/PixarAnimationStudios/OpenUSD/blob/363a7c8da8d1937072a5f0989e91faf72eb1fa76/LICENSE.txt",
+      "input": "clean.usdz",
+      "roundtrip_extension": "usdc",
+      "files": [
+        {
+          "path": "clean.usdz",
+          "url": "https://raw.githubusercontent.com/PixarAnimationStudios/OpenUSD/363a7c8da8d1937072a5f0989e91faf72eb1fa76/pxr/usdValidation/bin/usdchecker/testenv/testUsdChecker/clean/clean.usdz",
+          "sha256": "a9e51d944261f6b2cfa7f9590e54c2749d798dbfc2789aaf3768e6ac6cae57a1"
+        }
+      ]
+    }
+  ]
+}
