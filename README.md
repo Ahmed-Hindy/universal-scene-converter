@@ -1,6 +1,6 @@
 # Universal Scene Converter
 
-Universal Scene Converter is a small CLI tool for converting OpenUSD, FBX, OBJ, STL, and glTF files.
+`USC` is a small CLI tool for converting OpenUSD, FBX, OBJ, STL, and glTF files.
 
 It's a standalone tool built on top of [Adobe's USD conversion plugins](https://github.com/adobe/USD-Fileformat-plugins).
 
@@ -45,8 +45,6 @@ Batch options:
 
 ## Automation
 
-Use `--json` when invoking Universal Scene Converter from another application:
-
 ```powershell
 $result = .\bin\usdconvert.exe model.fbx -o model.usdc --json |
     ConvertFrom-Json
@@ -56,7 +54,7 @@ if (-not $result.success) {
 }
 ```
 
-The JSON result includes the tool and OpenUSD versions, exit code, per-file status, summary counts, and every generated file including sidecars. The full contract and compatibility rules are documented in [JSON_OUTPUT.md](JSON_OUTPUT.md). A JSON Schema is included in the release at `schemas\usdconvert-result.schema.json`.
+The full contract and compatibility rules are documented in [JSON_OUTPUT.md](JSON_OUTPUT.md). A JSON Schema is included in the release at `schemas\usdconvert-result.schema.json`.
 
 Show help or version information:
 
