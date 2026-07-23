@@ -130,10 +130,21 @@ jobs:
         shell: pwsh
         run: ./scripts/ci/Test-Runtime.ps1
 
+      - name: Name portable CLI artifact
+        id: artifact-name
+        shell: pwsh
+        run: |
+          if ("${{ github.ref_type }}" -eq "tag") {
+              $identifier = "${{ github.ref_name }}"
+          } else {
+              $identifier = git rev-parse --short HEAD
+          }
+          "identifier=$identifier" >> $env:GITHUB_OUTPUT
+
       - name: Upload portable CLI
         uses: actions/upload-artifact@v7
         with:
-          name: universal-scene-converter-windows-x64
+          name: universal-scene-converter-windows-x64-${{ steps.artifact-name.outputs.identifier }}
           path: ${{ github.workspace }}/work/dist/universal-scene-converter-windows-x64.zip
           if-no-files-found: error
           compression-level: 0
