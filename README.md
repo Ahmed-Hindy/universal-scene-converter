@@ -8,6 +8,10 @@ It's a standalone tool built on top of [Adobe's USD conversion plugins](https://
   <img src="docs/images/universal-scene-converter-format-cycle.png" alt="USD conversion cycle between FBX, PLY, OBJ, and glTF" width="220">
 </p>
 
+## Promo video
+
+[Watch the 64-second XPU promo](docs/media/usc-promo-xpu-720p-64s-v002.mp4)
+
 ## Quick start
 
 Download `universal-scene-converter-windows-x64.zip` from the [latest release](https://github.com/Ahmed-Hindy/universal-scene-converter/releases/latest).
