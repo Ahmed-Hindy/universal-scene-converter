@@ -10,7 +10,10 @@ It's a standalone tool built on top of [Adobe's USD conversion plugins](https://
 
 ## Promo video
 
-[Watch the 64-second XPU promo](docs/media/usc-promo-xpu-720p-64s-v002.mp4)
+<video controls width="720" preload="metadata">
+  <source src="https://raw.githubusercontent.com/Ahmed-Hindy/universal-scene-converter/main/docs/media/usc-promo-xpu-720p-64s-v002.mp4" type="video/mp4">
+  <a href="https://raw.githubusercontent.com/Ahmed-Hindy/universal-scene-converter/main/docs/media/usc-promo-xpu-720p-64s-v002.mp4">Watch the 64-second XPU promo</a>
+</video>
 
 ## Quick start
 
