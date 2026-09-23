@@ -3,6 +3,7 @@
 #include <windows.h>
 
 #include <algorithm>
+#include <iostream>
 
 namespace scene_converter::internal {
 namespace {
@@ -50,19 +51,37 @@ std::vector<StagedFile> CollectStagedFiles(const fs::path& stagingRoot, const fs
     return stagedFiles;
 }
 
-void RollBackCommittedFiles(const std::vector<fs::path>& movedTargets,
+// Best-effort undo of a partial commit; every step runs regardless of earlier
+// failures. Failures are reported rather than swallowed (unlike routine cleanup)
+// because a non-restored original is stranded under the backup directory. Returns
+// false if anything could not be undone.
+bool RollBackCommittedFiles(const std::vector<fs::path>& movedTargets,
                             const std::vector<std::pair<fs::path, fs::path>>& backups) {
-    std::error_code ignoredError;
+    bool fullyRestored = true;
+    std::error_code errorCode;
     for (auto iterator = movedTargets.rbegin(); iterator != movedTargets.rend(); ++iterator) {
-        fs::remove(*iterator, ignoredError);
-        ignoredError.clear();
+        fs::remove(*iterator, errorCode);
+        if (errorCode) {
+            std::cerr << "Warning: could not remove partially committed output " << PathToUtf8(*iterator) << ": "
+                      << errorCode.message() << '\n';
+            fullyRestored = false;
+        }
+        errorCode.clear();
     }
     for (auto iterator = backups.rbegin(); iterator != backups.rend(); ++iterator) {
-        fs::create_directories(iterator->first.parent_path(), ignoredError);
-        ignoredError.clear();
-        fs::rename(iterator->second, iterator->first, ignoredError);
-        ignoredError.clear();
+        const fs::path& originalPath = iterator->first;
+        const fs::path& backupPath = iterator->second;
+        fs::create_directories(originalPath.parent_path(), errorCode);
+        errorCode.clear();
+        fs::rename(backupPath, originalPath, errorCode);
+        if (errorCode) {
+            std::cerr << "Warning: could not restore original output " << PathToUtf8(originalPath)
+                      << " from backup " << PathToUtf8(backupPath) << ": " << errorCode.message() << '\n';
+            fullyRestored = false;
+        }
+        errorCode.clear();
     }
+    return fullyRestored;
 }
 
 }  // namespace
@@ -136,14 +155,16 @@ CommitResult CommitStagedFiles(const fs::path& stagingRoot, const fs::path& outp
             const fs::path backupPath = backupRoot / stagedFile->relativePath;
             fs::create_directories(backupPath.parent_path(), errorCode);
             if (errorCode) {
-                RollBackCommittedFiles({}, backups);
-                RemoveTree(backupRoot);
+                if (RollBackCommittedFiles({}, backups)) {
+                    RemoveTree(backupRoot);
+                }
                 return {ExitCode::outputError, "Could not create a backup path: " + errorCode.message(), {}};
             }
             fs::rename(stagedFile->targetPath, backupPath, errorCode);
             if (errorCode) {
-                RollBackCommittedFiles({}, backups);
-                RemoveTree(backupRoot);
+                if (RollBackCommittedFiles({}, backups)) {
+                    RemoveTree(backupRoot);
+                }
                 return {ExitCode::outputError,
                         "Could not back up existing output " + PathToUtf8(stagedFile->targetPath) + ": " +
                             errorCode.message(),
@@ -160,9 +181,17 @@ CommitResult CommitStagedFiles(const fs::path& stagingRoot, const fs::path& outp
             fs::rename(stagedFile.sourcePath, stagedFile.targetPath, errorCode);
         }
         if (errorCode) {
-            RollBackCommittedFiles(movedTargets, backups);
+            const bool fullyRestored = RollBackCommittedFiles(movedTargets, backups);
             RemoveTree(stagingRoot);
-            RemoveTree(backupRoot);
+            if (fullyRestored) {
+                RemoveTree(backupRoot);
+            } else {
+                // Rollback incomplete: keep the backup tree, since it may still hold
+                // originals that could not be restored.
+                std::cerr << "Warning: rollback did not fully complete; see the warnings above for outputs that "
+                             "could not be removed or restored. Any recoverable originals remain under "
+                          << PathToUtf8(backupRoot) << ".\n";
+            }
             return {ExitCode::outputError,
                     "Could not commit output " + PathToUtf8(stagedFile.targetPath) + ": " + errorCode.message(), {}};
         }

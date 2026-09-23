@@ -14,6 +14,7 @@ namespace scene_converter::internal {
 struct InputItem {
     fs::path inputPath;
     fs::path sourceRoot;
+    std::wstring key;  // GetPathKey(inputPath), resolved once so sort/unique/lookup need not recompute it.
 };
 
 struct StagedFile {

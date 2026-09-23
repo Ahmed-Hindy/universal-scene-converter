@@ -7,6 +7,11 @@
 namespace scene_converter {
 namespace {
 
+internal::InputItem MakeInputItem(fs::path inputPath, fs::path sourceRoot) {
+    std::wstring key = internal::GetPathKey(inputPath);
+    return {std::move(inputPath), std::move(sourceRoot), std::move(key)};
+}
+
 bool AddDirectoryInputs(const fs::path& directoryPath, const CommandLine& commandLine,
                         const fs::path& resolvedOutputDirectory, std::vector<internal::InputItem>& inputItems,
                         std::string& errorMessage) {
@@ -34,7 +39,7 @@ bool AddDirectoryInputs(const fs::path& directoryPath, const CommandLine& comman
                 break;
             }
             if (isRegularFile && internal::IsSupportedInputPath(iterator->path())) {
-                inputItems.push_back({iterator->path(), directoryPath});
+                inputItems.push_back(MakeInputItem(iterator->path(), directoryPath));
             }
         }
     } else {
@@ -45,7 +50,7 @@ bool AddDirectoryInputs(const fs::path& directoryPath, const CommandLine& comman
                 break;
             }
             if (isRegularFile && internal::IsSupportedInputPath(iterator->path())) {
-                inputItems.push_back({iterator->path(), directoryPath});
+                inputItems.push_back(MakeInputItem(iterator->path(), directoryPath));
             }
         }
     }
@@ -128,7 +133,7 @@ JobPlan BuildJobPlan(const CommandLine& commandLine) {
         if (fs::exists(inputStatus) && !fs::is_regular_file(inputStatus)) {
             return PlanError(ExitCode::inputError, "Input is not a regular file: " + PathToUtf8(inputPath), true);
         }
-        inputItems.push_back({inputPath, {}});
+        inputItems.push_back(MakeInputItem(inputPath, {}));
     }
 
     if (commandLine.recursive && !foundDirectoryInput) {
@@ -139,17 +144,17 @@ JobPlan BuildJobPlan(const CommandLine& commandLine) {
     }
 
     std::sort(inputItems.begin(), inputItems.end(), [](const internal::InputItem& first, const internal::InputItem& second) {
-        return internal::GetPathKey(first.inputPath) < internal::GetPathKey(second.inputPath);
+        return first.key < second.key;
     });
     inputItems.erase(
         std::unique(inputItems.begin(), inputItems.end(), [](const internal::InputItem& first, const internal::InputItem& second) {
-            return internal::GetPathKey(first.inputPath) == internal::GetPathKey(second.inputPath);
+            return first.key == second.key;
         }),
         inputItems.end());
 
     std::unordered_set<std::wstring> inputKeys;
     for (const internal::InputItem& inputItem : inputItems) {
-        inputKeys.insert(internal::GetPathKey(inputItem.inputPath));
+        inputKeys.insert(inputItem.key);
     }
 
     std::unordered_set<std::wstring> outputKeys;
