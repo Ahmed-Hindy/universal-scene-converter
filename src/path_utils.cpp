@@ -61,6 +61,55 @@ std::wstring GetAbsolutePathWide(const std::wstring& path) {
     return result;
 }
 
+// Folds case the way the platform does, so that path keys compare equal for any
+// pair of names the file system considers identical. ToLower() is deliberately
+// not reused here: it relies on std::towlower, which only folds ASCII in the
+// default locale, so a pair of names differing only in the case of a non-ASCII
+// character (for example U+00C4 against U+00E4) would otherwise produce two
+// distinct keys for a single file. Uppercase folding mirrors the file system's
+// own canonicalisation and the case-insensitive mode of CompareStringOrdinal,
+// which PathsReferToSameFile already relies on.
+std::wstring FoldPathCase(const std::wstring& value) {
+    if (value.empty()) {
+        return {};
+    }
+
+    const int sourceSize = static_cast<int>(value.size());
+    const int requiredSize = LCMapStringEx(LOCALE_NAME_INVARIANT, LCMAP_UPPERCASE, value.c_str(), sourceSize, nullptr,
+                                           0, nullptr, nullptr, 0);
+    if (requiredSize > 0) {
+        std::wstring folded(static_cast<std::size_t>(requiredSize), L'\0');
+        const int mappedSize = LCMapStringEx(LOCALE_NAME_INVARIANT, LCMAP_UPPERCASE, value.c_str(), sourceSize,
+                                             folded.data(), requiredSize, nullptr, nullptr, 0);
+        if (mappedSize > 0) {
+            folded.resize(static_cast<std::size_t>(mappedSize));
+            return folded;
+        }
+    }
+
+    std::wstring fallback = value;
+    std::transform(fallback.begin(), fallback.end(), fallback.begin(),
+                   [](wchar_t character) { return static_cast<wchar_t>(std::towupper(character)); });
+    return fallback;
+}
+
+// Gives every path key one spelling for one location. Separators are unified and
+// redundant trailing separators are dropped, because a directory named with and
+// without a trailing separator is the same directory; leaving the two spellings
+// distinct let a trailing separator slip past the "--output-dir must differ from
+// a directory input" check and past the recursive enumeration guard that keeps a
+// nested output tree from being re-ingested as input. The root separator is kept,
+// since a drive root and a bare drive letter denote different locations.
+std::wstring CanonicalizePathKeyShape(std::wstring value) {
+    std::replace(value.begin(), value.end(), L'/', L'\\');
+
+    const std::size_t rootLength = fs::path(value).root_path().wstring().size();
+    while (value.size() > rootLength && value.back() == L'\\') {
+        value.pop_back();
+    }
+    return value;
+}
+
 }  // namespace
 
 fs::path GetAbsolutePath(const fs::path& path, std::error_code& errorCode) {
@@ -72,7 +121,7 @@ std::wstring GetPathKey(const fs::path& path) {
     if (absolutePath.empty()) {
         absolutePath = path.lexically_normal().wstring();
     }
-    return ToLower(std::move(absolutePath));
+    return FoldPathCase(CanonicalizePathKeyShape(std::move(absolutePath)));
 }
 
 bool IsPathWithin(const fs::path& path, const fs::path& parentPath) {

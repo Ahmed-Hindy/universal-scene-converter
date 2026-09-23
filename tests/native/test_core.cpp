@@ -62,6 +62,65 @@ void TestArgumentParsing() {
             "An end-of-options token used as a value must not stop option detection.");
 }
 
+void TestPathKeys(const fs::path& root) {
+    const fs::path directory = root / "keys";
+
+    // A path key identifies a location, so spellings that name the same location
+    // must collapse to one key. Otherwise every key-based guard silently misses.
+    Require(scene_converter::internal::GetPathKey(directory) ==
+                scene_converter::internal::GetPathKey(directory.wstring() + L"\\"),
+            "A trailing separator must not change a path key.");
+    Require(scene_converter::internal::GetPathKey(directory) ==
+                scene_converter::internal::GetPathKey(directory / L"."),
+            "A trailing '.' must not change a path key.");
+    Require(scene_converter::internal::GetPathKey(directory) ==
+                scene_converter::internal::GetPathKey(directory / L"sub" / L".."),
+            "A trailing '..' must not change a path key.");
+    Require(scene_converter::internal::GetPathKey(directory) !=
+                scene_converter::internal::GetPathKey(root / "keys2"),
+            "Distinct sibling directories must not share a path key.");
+
+    // "C:\" and "C:" are different locations, so the root separator must survive.
+    const std::wstring driveRootKey = scene_converter::internal::GetPathKey(L"C:\\");
+    Require(!driveRootKey.empty() && driveRootKey.back() == L'\\',
+            "A drive root must keep its trailing separator.");
+
+    // The file system folds case beyond ASCII; the key must fold the same way.
+    Require(scene_converter::internal::GetPathKey(L"C:\\dir\\\u00C4sset.fbx") ==
+                scene_converter::internal::GetPathKey(L"C:\\dir\\\u00E4sset.fbx"),
+            "Path keys must fold Latin-1 case.");
+    Require(scene_converter::internal::GetPathKey(L"C:\\dir\\\u0416.fbx") ==
+                scene_converter::internal::GetPathKey(L"C:\\dir\\\u0436.fbx"),
+            "Path keys must fold Cyrillic case.");
+    Require(scene_converter::internal::GetPathKey(L"C:\\dir\\ASSET.FBX") ==
+                scene_converter::internal::GetPathKey(L"C:\\dir\\asset.fbx"),
+            "Path keys must fold ASCII case.");
+
+    // Containment drives the recursive enumeration guard.
+    Require(scene_converter::internal::IsPathWithin(directory.wstring() + L"\\", directory),
+            "A trailing separator must not defeat a containment check.");
+    Require(scene_converter::internal::IsPathWithin(directory / "child", directory),
+            "A nested path must be reported as contained.");
+    Require(!scene_converter::internal::IsPathWithin(directory, directory / "child"),
+            "A parent must not be reported as contained in its child.");
+}
+
+void TestOutputDirectoryGuard(const fs::path& root) {
+    const fs::path sourceRoot = root / "guard";
+    WriteText(sourceRoot / "hero.fbx", "fixture");
+
+    // Shells commonly append a separator when completing a directory name. That
+    // must not let an output directory alias one of its own inputs.
+    const scene_converter::ParseResult parsed =
+        scene_converter::ParseArguments({sourceRoot.wstring() + L"\\", L"--output-dir", sourceRoot.wstring(),
+                                         L"--recursive", L"--output-format", L"usdc"});
+    Require(parsed.exitCode == scene_converter::ExitCode::success, "Guard fixture arguments should parse.");
+
+    const scene_converter::JobPlan plan = scene_converter::BuildJobPlan(parsed.commandLine);
+    Require(plan.exitCode == scene_converter::ExitCode::usageError,
+            "A trailing separator must not bypass the --output-dir guard.");
+}
+
 void TestJobPlanning(const fs::path& root) {
     const fs::path sourceRoot = root / "assets";
     WriteText(sourceRoot / "hero.fbx", "fixture");
@@ -150,6 +209,8 @@ int main() {
     try {
         const fs::path root = MakeTestRoot();
         TestArgumentParsing();
+        TestPathKeys(root);
+        TestOutputDirectoryGuard(root);
         TestJobPlanning(root);
         TestOutputTransaction(root);
         TestJsonRendering();
