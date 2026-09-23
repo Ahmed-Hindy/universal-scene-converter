@@ -5,7 +5,7 @@ on:
   push:
     branches: [main]
     tags: ["v*"]
-    paths:
+    paths: &code_paths
       - ".github/workflows/build-universal-scene-converter.yml"
       - "CMakeLists.txt"
       - "JSON_OUTPUT.md"
@@ -15,6 +15,10 @@ on:
       - "scripts/ci/**"
       - "tests/**"
       - "licenses/**"
+  pull_request:
+    branches: [main]
+    # Same filter as push: a PR that cannot change build inputs need not build.
+    paths: *code_paths
 
 permissions:
   contents: write
@@ -84,7 +88,9 @@ jobs:
         run: ./scripts/ci/Build-OpenUsd.ps1
 
       - name: Save deterministic OpenUSD cache
-        if: steps.native-cache.outputs.cache-hit != 'true' && steps.openusd-cache.outputs.cache-hit != 'true'
+        # Pull requests (including from forks) get read-only cache access, so a
+        # save would fail or be discarded; skip it and let push builds populate.
+        if: github.event_name != 'pull_request' && steps.native-cache.outputs.cache-hit != 'true' && steps.openusd-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v6
         with:
           path: ${{ github.workspace }}/work/usd-install
@@ -101,7 +107,7 @@ jobs:
         run: ./scripts/ci/Build-AdobePlugins.ps1
 
       - name: Save combined native SDK cache
-        if: steps.native-cache.outputs.cache-hit != 'true'
+        if: github.event_name != 'pull_request' && steps.native-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v6
         with:
           path: ${{ github.workspace }}/work/usd-install
