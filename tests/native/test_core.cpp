@@ -70,8 +70,6 @@ void TestArgumentParsing() {
 void TestPathKeys(const fs::path& root) {
     const fs::path directory = root / "keys";
 
-    // A path key identifies a location, so spellings that name the same location
-    // must collapse to one key. Otherwise every key-based guard silently misses.
     Require(scene_converter::internal::GetPathKey(directory) ==
                 scene_converter::internal::GetPathKey(directory.wstring() + L"\\"),
             "A trailing separator must not change a path key.");
@@ -85,20 +83,17 @@ void TestPathKeys(const fs::path& root) {
                 scene_converter::internal::GetPathKey(root / "keys2"),
             "Distinct sibling directories must not share a path key.");
 
-    // Resolving a path must NOT canonicalise it: a trailing separator on an -o
-    // value is how the user signals a directory, and ConvertFile relies on an
-    // empty filename() to reject that as a usage error before doing any work.
+    // Unlike GetPathKey, GetAbsolutePath must NOT drop a trailing separator: on an
+    // -o value it signals a directory, which ConvertFile rejects via empty filename().
     std::error_code errorCode;
     const fs::path resolved = scene_converter::internal::GetAbsolutePath(directory.wstring() + L"\\", errorCode);
     Require(!errorCode && resolved.filename().empty(),
             "GetAbsolutePath must preserve a trailing separator.");
 
-    // "C:\" and "C:" are different locations, so the root separator must survive.
     const std::wstring driveRootKey = scene_converter::internal::GetPathKey(L"C:\\");
     Require(!driveRootKey.empty() && driveRootKey.back() == L'\\',
             "A drive root must keep its trailing separator.");
 
-    // The file system folds case beyond ASCII; the key must fold the same way.
     Require(scene_converter::internal::GetPathKey(L"C:\\dir\\\u00C4sset.fbx") ==
                 scene_converter::internal::GetPathKey(L"C:\\dir\\\u00E4sset.fbx"),
             "Path keys must fold Latin-1 case.");
@@ -109,7 +104,6 @@ void TestPathKeys(const fs::path& root) {
                 scene_converter::internal::GetPathKey(L"C:\\dir\\asset.fbx"),
             "Path keys must fold ASCII case.");
 
-    // Containment drives the recursive enumeration guard.
     Require(scene_converter::internal::IsPathWithin(directory.wstring() + L"\\", directory),
             "A trailing separator must not defeat a containment check.");
     Require(scene_converter::internal::IsPathWithin(directory / "child", directory),
@@ -122,8 +116,8 @@ void TestOutputDirectoryGuard(const fs::path& root) {
     const fs::path sourceRoot = root / "guard";
     WriteText(sourceRoot / "hero.fbx", "fixture");
 
-    // Shells commonly append a separator when completing a directory name. That
-    // must not let an output directory alias one of its own inputs.
+    // A trailing separator (as shell completion appends) must not let --output-dir
+    // alias one of its own inputs.
     const scene_converter::ParseResult parsed =
         scene_converter::ParseArguments({sourceRoot.wstring() + L"\\", L"--output-dir", sourceRoot.wstring(),
                                          L"--recursive", L"--output-format", L"usdc"});
@@ -197,17 +191,11 @@ void TestOutputTransactionRollback(const fs::path& root) {
     const fs::path outputRoot = root / "rollback";
     const fs::path stagingRoot = outputRoot / ".stage";
 
-    // The failure must happen DURING the commit loop, after at least one file has
-    // been committed, so that rollback has real work to do. It must not be caught
-    // by the preflight pass -- a non-regular existing target is rejected up front,
-    // before any backup or commit, and would never exercise rollback.
-    //
-    // "first.gltf" sorts first, has an existing regular-file target, and so is
-    // backed up and then committed. "second.gltf" is staged under a subdirectory
-    // "sub/", and a regular FILE named "sub" is placed at the output root. When
-    // the commit loop reaches it, create_directories(outputRoot/"sub") fails
-    // because "sub" is a file, the move never happens, and rollback runs with
-    // "first.gltf" already committed -- the true mid-commit failure path.
+    // The failure must land inside the commit loop, after "first.gltf" is backed up
+    // and committed, so rollback is actually exercised. A non-regular existing
+    // target would instead be rejected during preflight, before any rollback. Here
+    // the second file commits into "sub/", and a regular file named "sub" makes its
+    // create_directories fail once "first.gltf" is already in place.
     WriteText(stagingRoot / "first.gltf", "new-first");
     WriteText(stagingRoot / "sub" / "second.gltf", "new-second");
     WriteText(outputRoot / "first.gltf", "old-first");
@@ -219,18 +207,14 @@ void TestOutputTransactionRollback(const fs::path& root) {
             "A failed mid-commit move must report an output error.");
     Require(result.generatedFiles.empty(), "A rolled-back transaction must report no generated files.");
 
-    // The point of the transaction: a partial commit leaves no trace. "first" is
-    // restored to its original contents from its backup.
     Require(fs::is_regular_file(outputRoot / "first.gltf") &&
                 ReadText(outputRoot / "first.gltf") == "old-first",
             "Rollback must restore the first output from its backup.");
     Require(ReadText(outputRoot / "sub") == "not a directory",
             "Rollback must not disturb the blocking file.");
 
-    // A fully restored rollback removes the staging tree and every backup tree it
-    // created, leaving nothing behind but the pre-existing outputs. Checking that
-    // the staging directory is gone is the strongest signal that rollback ran:
-    // the preflight bail-out path never touches it.
+    // Staging removal is the signal rollback actually ran: the preflight bail-out
+    // path never touches it.
     Require(!fs::exists(stagingRoot), "A completed rollback must remove the staging directory.");
     for (const fs::directory_entry& entry : fs::directory_iterator(outputRoot)) {
         const std::wstring name = entry.path().filename().wstring();

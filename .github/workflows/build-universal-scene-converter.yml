@@ -177,10 +177,8 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
 
-  # Publishing is isolated in its own tag-only job so that contents: write is
-  # never granted to the build job, which runs checked-out pull-request code.
-  # This job runs no repository code: it only downloads the built artifact and
-  # hands it to gh release.
+  # Isolated so contents: write is never granted to the build job (which runs
+  # checked-out PR code). Runs no repository code -- only downloads the artifact.
   publish-release:
     name: Publish tagged release
     needs: build-windows

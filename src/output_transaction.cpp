@@ -51,13 +51,10 @@ std::vector<StagedFile> CollectStagedFiles(const fs::path& stagingRoot, const fs
     return stagedFiles;
 }
 
-// Best-effort undo of a partial commit: remove any files already moved into
-// place, then restore backed-up originals. Every step is attempted regardless of
-// earlier failures, since giving back as many originals as possible is better
-// than stopping at the first error. A failure here is the one case that can lose
-// a user's data -- an original that cannot be restored is stranded under the
-// backup directory -- so unlike the routine cleanup elsewhere it is reported
-// rather than swallowed, and the caller is told where the backups still live.
+// Best-effort undo of a partial commit; every step runs regardless of earlier
+// failures. Failures are reported rather than swallowed (unlike routine cleanup)
+// because a non-restored original is stranded under the backup directory. Returns
+// false if anything could not be undone.
 bool RollBackCommittedFiles(const std::vector<fs::path>& movedTargets,
                             const std::vector<std::pair<fs::path, fs::path>>& backups) {
     bool fullyRestored = true;
@@ -189,11 +186,8 @@ CommitResult CommitStagedFiles(const fs::path& stagingRoot, const fs::path& outp
             if (fullyRestored) {
                 RemoveTree(backupRoot);
             } else {
-                // Keep the backup tree: rollback did not fully complete, so it may
-                // still hold originals that could not be restored. Do not claim the
-                // backups are intact -- the failure may instead have been a removal
-                // of a partially committed file -- so point at the specific warnings
-                // RollBackCommittedFiles printed above.
+                // Rollback incomplete: keep the backup tree, since it may still hold
+                // originals that could not be restored.
                 std::cerr << "Warning: rollback did not fully complete; see the warnings above for outputs that "
                              "could not be removed or restored. Any recoverable originals remain under "
                           << PathToUtf8(backupRoot) << ".\n";

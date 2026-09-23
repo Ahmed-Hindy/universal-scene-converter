@@ -61,14 +61,10 @@ std::wstring GetAbsolutePathWide(const std::wstring& path) {
     return result;
 }
 
-// Folds case the way the file system does, so that path keys compare equal for
-// any pair of names it considers identical. ToLower() is deliberately not reused
-// here: it relies on std::towlower, which only folds ASCII in the default
-// locale, so a pair of names differing only in the case of a non-ASCII character
-// (for example U+00C4 against U+00E4) would otherwise yield two distinct keys
-// for one file. Uppercase is the correct direction for case-insensitive
-// comparison, matching the file system's own upcasing and the case-insensitive
-// mode of CompareStringOrdinal that PathsReferToSameFile relies on.
+// Not ToLower(): std::towlower folds only ASCII in the default locale, so names
+// differing only in non-ASCII case (e.g. U+00C4 vs U+00E4) would key differently
+// for one on-disk file. LCMapStringEx uppercasing matches the file system and the
+// CompareStringOrdinal that PathsReferToSameFile uses.
 std::wstring FoldPathCase(const std::wstring& value) {
     if (value.empty()) {
         return {};
@@ -91,12 +87,9 @@ std::wstring FoldPathCase(const std::wstring& value) {
     return folded;
 }
 
-// Gives one location one spelling. A trailing separator shows up as an empty
-// filename component, and dropping it matters because leaving "assets" and
-// "assets\" distinct let a trailing separator slip past the "--output-dir must
-// differ from a directory input" check and past the recursive enumeration guard
-// that stops a nested output tree being re-ingested as input. A root keeps its
-// separator, since a drive root and a bare drive letter denote different places.
+// Without this, "assets" and "assets\" key differently and a trailing separator
+// slips past the --output-dir guards. A trailing separator is an empty filename;
+// a root has none to drop, so "C:\" stays distinct from "C:".
 fs::path DropRedundantTrailingSeparator(fs::path path) {
     if (!path.has_filename() && path.has_relative_path()) {
         return path.parent_path();
@@ -106,11 +99,8 @@ fs::path DropRedundantTrailingSeparator(fs::path path) {
 
 }  // namespace
 
-// Deliberately preserves a trailing separator. Resolving a path is not the same
-// as canonicalising it for comparison: GetPathKey does the latter, and callers
-// here still need the distinction. A trailing separator on an -o value signals
-// that the user meant a directory, and ConvertFile reports that as a usage error
-// before doing any work rather than exporting to a file of that name.
+// Unlike GetPathKey, this keeps a trailing separator: on an -o value it signals a
+// directory, which ConvertFile rejects via empty filename(). Resolving != keying.
 fs::path GetAbsolutePath(const fs::path& path, std::error_code& errorCode) {
     return fs::absolute(path, errorCode).lexically_normal();
 }
