@@ -88,9 +88,11 @@ jobs:
         run: ./scripts/ci/Build-OpenUsd.ps1
 
       - name: Save deterministic OpenUSD cache
-        # Pull requests (including from forks) get read-only cache access, so a
-        # save would fail or be discarded; skip it and let push builds populate.
-        if: github.event_name != 'pull_request' && steps.native-cache.outputs.cache-hit != 'true' && steps.openusd-cache.outputs.cache-hit != 'true'
+        # Populate the cache from push builds and from same-repo pull requests so
+        # later runs restore it instead of rebuilding OpenUSD. Only fork pull
+        # requests are excluded: they get read-only cache access, so a save would
+        # fail, and a fork must not be able to write the cache push builds trust.
+        if: ${{ !github.event.pull_request.head.repo.fork && steps.native-cache.outputs.cache-hit != 'true' && steps.openusd-cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v6
         with:
           path: ${{ github.workspace }}/work/usd-install
@@ -107,7 +109,9 @@ jobs:
         run: ./scripts/ci/Build-AdobePlugins.ps1
 
       - name: Save combined native SDK cache
-        if: github.event_name != 'pull_request' && steps.native-cache.outputs.cache-hit != 'true'
+        # See "Save deterministic OpenUSD cache": populate from push and same-repo
+        # PRs, exclude only fork PRs.
+        if: ${{ !github.event.pull_request.head.repo.fork && steps.native-cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v6
         with:
           path: ${{ github.workspace }}/work/usd-install
