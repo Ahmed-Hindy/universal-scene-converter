@@ -14,6 +14,10 @@ namespace scene_converter::internal {
 struct InputItem {
     fs::path inputPath;
     fs::path sourceRoot;
+    // GetPathKey(inputPath), resolved once at discovery. Planning sorts,
+    // de-duplicates and set-indexes these items, so recomputing the key per
+    // comparison would cost O(n log n) path resolutions instead of O(n).
+    std::wstring key;
 };
 
 struct StagedFile {

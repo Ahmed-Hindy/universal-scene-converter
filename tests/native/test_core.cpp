@@ -80,6 +80,13 @@ void TestPathKeys(const fs::path& root) {
                 scene_converter::internal::GetPathKey(root / "keys2"),
             "Distinct sibling directories must not share a path key.");
 
+    // Resolved paths are also normalised at the source, so a trailing separator
+    // never reaches a planned job or the reported input path.
+    std::error_code errorCode;
+    const fs::path resolved = scene_converter::internal::GetAbsolutePath(directory.wstring() + L"\\", errorCode);
+    Require(!errorCode && resolved.filename() == L"keys",
+            "GetAbsolutePath must drop a redundant trailing separator.");
+
     // "C:\" and "C:" are different locations, so the root separator must survive.
     const std::wstring driveRootKey = scene_converter::internal::GetPathKey(L"C:\\");
     Require(!driveRootKey.empty() && driveRootKey.back() == L'\\',
