@@ -26,6 +26,11 @@ void WriteText(const fs::path& path, const std::string& content) {
     }
 }
 
+std::string ReadText(const fs::path& path) {
+    std::ifstream stream(path, std::ios::binary);
+    return std::string((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
+}
+
 fs::path MakeTestRoot() {
     std::error_code errorCode;
     const fs::path root = fs::temp_directory_path() / "universal-scene-converter-core-tests";
@@ -173,11 +178,8 @@ void TestOutputTransaction(const fs::path& root) {
     Require(refused.exitCode == scene_converter::ExitCode::usageError,
             "Existing output should be preserved without force.");
 
-    std::ifstream oldMain(outputRoot / "scene.gltf", std::ios::binary);
-    std::string oldText;
-    oldMain >> oldText;
-    oldMain.close();
-    Require(oldText == "old-main", "Refused commit must preserve the original output.");
+    Require(ReadText(outputRoot / "scene.gltf") == "old-main",
+            "Refused commit must preserve the original output.");
 
     const scene_converter::internal::CommitResult committed =
         scene_converter::internal::CommitStagedFiles(stagingRoot, outputRoot, true);
@@ -189,6 +191,45 @@ void TestOutputTransaction(const fs::path& root) {
             "Generated files should be reported in deterministic path order.");
     Require(fs::is_regular_file(outputRoot / "scene.gltf") && fs::is_regular_file(outputRoot / "scene.bin"),
             "Transaction should commit all staged files.");
+}
+
+void TestOutputTransactionRollback(const fs::path& root) {
+    const fs::path outputRoot = root / "rollback";
+    const fs::path stagingRoot = outputRoot / ".stage";
+
+    // Two staged files. "first.gltf" sorts ahead of "second.gltf", so it commits
+    // first: its existing target is backed up, then the staged copy is moved in.
+    WriteText(stagingRoot / "first.gltf", "new-first");
+    WriteText(stagingRoot / "second.gltf", "new-second");
+    WriteText(outputRoot / "first.gltf", "old-first");
+
+    // Block "second.gltf" with a non-empty directory at its target path. It is not
+    // a regular file, so it is never backed up; when the commit loop tries to move
+    // the staged file onto it, the rename fails and rollback runs after "first"
+    // has already been committed -- exactly the mid-commit failure path.
+    WriteText(outputRoot / "second.gltf" / "blocker", "blocker");
+
+    const scene_converter::internal::CommitResult result =
+        scene_converter::internal::CommitStagedFiles(stagingRoot, outputRoot, true);
+    Require(result.exitCode == scene_converter::ExitCode::outputError,
+            "A failed mid-commit rename must report an output error.");
+    Require(result.generatedFiles.empty(), "A rolled-back transaction must report no generated files.");
+
+    // The point of the transaction: a partial commit leaves no trace. "first" is
+    // restored to its original contents and the blocker is untouched.
+    Require(fs::is_regular_file(outputRoot / "first.gltf") &&
+                ReadText(outputRoot / "first.gltf") == "old-first",
+            "Rollback must restore the first output from its backup.");
+    Require(fs::is_directory(outputRoot / "second.gltf"),
+            "Rollback must not disturb the blocking directory.");
+
+    // A rollback that fully restores must clean up after itself, leaving no
+    // orphaned backup or staging directories in the output tree.
+    for (const fs::directory_entry& entry : fs::directory_iterator(outputRoot)) {
+        const std::wstring name = entry.path().filename().wstring();
+        Require(name.rfind(L".usdconvert-backup", 0) != 0 && name.rfind(L".usdconvert-stage", 0) != 0,
+                "A fully restored rollback must leave no temporary directories.");
+    }
 }
 
 void TestJsonRendering() {
@@ -221,6 +262,7 @@ int main() {
         TestOutputDirectoryGuard(root);
         TestJobPlanning(root);
         TestOutputTransaction(root);
+        TestOutputTransactionRollback(root);
         TestJsonRendering();
         std::error_code errorCode;
         fs::remove_all(root, errorCode);
