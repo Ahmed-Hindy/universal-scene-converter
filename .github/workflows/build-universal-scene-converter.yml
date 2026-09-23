@@ -20,8 +20,11 @@ on:
     # Same filter as push: a PR that cannot change build inputs need not build.
     paths: *code_paths
 
+# Least privilege by default: the build job runs checked-out pull-request code,
+# so it must not hold a write-capable token. Only the tag-only publish job below
+# elevates to contents: write.
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: universal-scene-converter-${{ github.ref }}
@@ -38,6 +41,9 @@ jobs:
     name: Windows x64
     runs-on: windows-2022
     timeout-minutes: 240
+    # Expose the uploaded artifact's name so the tag-only publish job can fetch it.
+    outputs:
+      artifact-name: universal-scene-converter-windows-x64-${{ steps.artifact-name.outputs.identifier }}
 
     steps:
       - name: Check out repository
@@ -160,28 +166,6 @@ jobs:
           compression-level: 0
           retention-days: 14
 
-      - name: Publish tagged release
-        if: startsWith(github.ref, 'refs/tags/v')
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          $zipPath = Join-Path $env:GITHUB_WORKSPACE "work/dist/universal-scene-converter-windows-x64.zip"
-          if (-not (Test-Path -LiteralPath $zipPath -PathType Leaf)) {
-              throw "Release ZIP was not created: $zipPath"
-          }
-
-          gh release view $env:GITHUB_REF_NAME --repo $env:GITHUB_REPOSITORY *> $null
-          if ($LASTEXITCODE -eq 0) {
-              gh release upload $env:GITHUB_REF_NAME $zipPath --clobber --repo $env:GITHUB_REPOSITORY
-          } else {
-              gh release create $env:GITHUB_REF_NAME $zipPath `
-                  --verify-tag --generate-notes `
-                  --title "Universal Scene Converter $env:GITHUB_REF_NAME" `
-                  --repo $env:GITHUB_REPOSITORY
-          }
-          if ($LASTEXITCODE -ne 0) { throw "Release publication failed." }
-
       - name: Upload failure diagnostics
         if: failure()
         uses: actions/upload-artifact@v7
@@ -192,3 +176,42 @@ jobs:
             ${{ github.workspace }}/work/smoke
           if-no-files-found: warn
           retention-days: 7
+
+  # Publishing is isolated in its own tag-only job so that contents: write is
+  # never granted to the build job, which runs checked-out pull-request code.
+  # This job runs no repository code: it only downloads the built artifact and
+  # hands it to gh release.
+  publish-release:
+    name: Publish tagged release
+    needs: build-windows
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download portable CLI
+        uses: actions/download-artifact@v7
+        with:
+          name: ${{ needs.build-windows.outputs.artifact-name }}
+          path: dist
+
+      - name: Publish tagged release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          zip="dist/universal-scene-converter-windows-x64.zip"
+          if [ ! -f "$zip" ]; then
+            echo "Release ZIP was not found in the downloaded artifact: $zip" >&2
+            exit 1
+          fi
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$zip" --clobber
+          else
+            gh release create "$TAG" "$zip" \
+              --verify-tag --generate-notes \
+              --title "Universal Scene Converter $TAG"
+          fi

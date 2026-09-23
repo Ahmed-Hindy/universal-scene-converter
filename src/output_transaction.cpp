@@ -189,8 +189,14 @@ CommitResult CommitStagedFiles(const fs::path& stagingRoot, const fs::path& outp
             if (fullyRestored) {
                 RemoveTree(backupRoot);
             } else {
-                std::cerr << "Warning: original outputs were preserved under " << PathToUtf8(backupRoot)
-                          << " because the rollback could not fully restore them.\n";
+                // Keep the backup tree: rollback did not fully complete, so it may
+                // still hold originals that could not be restored. Do not claim the
+                // backups are intact -- the failure may instead have been a removal
+                // of a partially committed file -- so point at the specific warnings
+                // RollBackCommittedFiles printed above.
+                std::cerr << "Warning: rollback did not fully complete; see the warnings above for outputs that "
+                             "could not be removed or restored. Any recoverable originals remain under "
+                          << PathToUtf8(backupRoot) << ".\n";
             }
             return {ExitCode::outputError,
                     "Could not commit output " + PathToUtf8(stagedFile.targetPath) + ": " + errorCode.message(), {}};

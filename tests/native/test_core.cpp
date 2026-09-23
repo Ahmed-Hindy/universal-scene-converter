@@ -197,34 +197,41 @@ void TestOutputTransactionRollback(const fs::path& root) {
     const fs::path outputRoot = root / "rollback";
     const fs::path stagingRoot = outputRoot / ".stage";
 
-    // Two staged files. "first.gltf" sorts ahead of "second.gltf", so it commits
-    // first: its existing target is backed up, then the staged copy is moved in.
+    // The failure must happen DURING the commit loop, after at least one file has
+    // been committed, so that rollback has real work to do. It must not be caught
+    // by the preflight pass -- a non-regular existing target is rejected up front,
+    // before any backup or commit, and would never exercise rollback.
+    //
+    // "first.gltf" sorts first, has an existing regular-file target, and so is
+    // backed up and then committed. "second.gltf" is staged under a subdirectory
+    // "sub/", and a regular FILE named "sub" is placed at the output root. When
+    // the commit loop reaches it, create_directories(outputRoot/"sub") fails
+    // because "sub" is a file, the move never happens, and rollback runs with
+    // "first.gltf" already committed -- the true mid-commit failure path.
     WriteText(stagingRoot / "first.gltf", "new-first");
-    WriteText(stagingRoot / "second.gltf", "new-second");
+    WriteText(stagingRoot / "sub" / "second.gltf", "new-second");
     WriteText(outputRoot / "first.gltf", "old-first");
-
-    // Block "second.gltf" with a non-empty directory at its target path. It is not
-    // a regular file, so it is never backed up; when the commit loop tries to move
-    // the staged file onto it, the rename fails and rollback runs after "first"
-    // has already been committed -- exactly the mid-commit failure path.
-    WriteText(outputRoot / "second.gltf" / "blocker", "blocker");
+    WriteText(outputRoot / "sub", "not a directory");
 
     const scene_converter::internal::CommitResult result =
         scene_converter::internal::CommitStagedFiles(stagingRoot, outputRoot, true);
     Require(result.exitCode == scene_converter::ExitCode::outputError,
-            "A failed mid-commit rename must report an output error.");
+            "A failed mid-commit move must report an output error.");
     Require(result.generatedFiles.empty(), "A rolled-back transaction must report no generated files.");
 
     // The point of the transaction: a partial commit leaves no trace. "first" is
-    // restored to its original contents and the blocker is untouched.
+    // restored to its original contents from its backup.
     Require(fs::is_regular_file(outputRoot / "first.gltf") &&
                 ReadText(outputRoot / "first.gltf") == "old-first",
             "Rollback must restore the first output from its backup.");
-    Require(fs::is_directory(outputRoot / "second.gltf"),
-            "Rollback must not disturb the blocking directory.");
+    Require(ReadText(outputRoot / "sub") == "not a directory",
+            "Rollback must not disturb the blocking file.");
 
-    // A rollback that fully restores must clean up after itself, leaving no
-    // orphaned backup or staging directories in the output tree.
+    // A fully restored rollback removes the staging tree and every backup tree it
+    // created, leaving nothing behind but the pre-existing outputs. Checking that
+    // the staging directory is gone is the strongest signal that rollback ran:
+    // the preflight bail-out path never touches it.
+    Require(!fs::exists(stagingRoot), "A completed rollback must remove the staging directory.");
     for (const fs::directory_entry& entry : fs::directory_iterator(outputRoot)) {
         const std::wstring name = entry.path().filename().wstring();
         Require(name.rfind(L".usdconvert-backup", 0) != 0 && name.rfind(L".usdconvert-stage", 0) != 0,
