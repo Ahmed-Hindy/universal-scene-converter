@@ -106,8 +106,13 @@ fs::path DropRedundantTrailingSeparator(fs::path path) {
 
 }  // namespace
 
+// Deliberately preserves a trailing separator. Resolving a path is not the same
+// as canonicalising it for comparison: GetPathKey does the latter, and callers
+// here still need the distinction. A trailing separator on an -o value signals
+// that the user meant a directory, and ConvertFile reports that as a usage error
+// before doing any work rather than exporting to a file of that name.
 fs::path GetAbsolutePath(const fs::path& path, std::error_code& errorCode) {
-    return DropRedundantTrailingSeparator(fs::absolute(path, errorCode).lexically_normal());
+    return fs::absolute(path, errorCode).lexically_normal();
 }
 
 std::wstring GetPathKey(const fs::path& path) {
